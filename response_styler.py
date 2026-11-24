@@ -10,19 +10,27 @@ RESPONSE_STYLE_SCRIPT = r"""
 
         let selectors;
 
-        if (location.hostname.includes("chatgpt.com")) {
+        if (location.hostname === "chatgpt.com") {
 
             selectors = [
+                '[data-message-author-role="assistant"]',
+                '[data-message-author-role="assistant"] *',
+
                 '[data-assistant-markdown]',
                 '[data-assistant-markdown] *',
+
                 '[data-assistant-markdown-root]',
                 '[data-assistant-markdown-root] *',
-                '[data-message-author-role="assistant"] .markdown',
-                '[data-message-author-role="assistant"] .markdown *'
+
+                '[data-dil-response]',
+                '[data-dil-response] *',
+
+                '[data-dil-response] [data-d-component="text"]'
             ];
 
         } else if (
-            location.hostname.includes("perplexity.ai")
+            location.hostname === "perplexity.ai" ||
+            location.hostname.endsWith(".perplexity.ai")
         ) {
 
             selectors = [
@@ -41,7 +49,8 @@ RESPONSE_STYLE_SCRIPT = r"""
         elements.forEach(element => {
 
             if (element.closest(
-                "button, svg, input, textarea"
+                "button, svg, input, textarea, " +
+                "[role='button'], [contenteditable='true']"
             )) {
                 return;
             }
@@ -60,6 +69,12 @@ RESPONSE_STYLE_SCRIPT = r"""
 
             element.style.setProperty(
                 "--d-inherited-text-color",
+                RESPONSE_COLOR,
+                "important"
+            );
+
+            element.style.setProperty(
+                "-webkit-text-fill-color",
                 RESPONSE_COLOR,
                 "important"
             );
@@ -83,6 +98,10 @@ RESPONSE_STYLE_SCRIPT = r"""
         window.__guardResponseObserver.disconnect();
     }
 
+    if (window.__guardStyleTimer) {
+        clearInterval(window.__guardStyleTimer);
+    }
+
     const observer = new MutationObserver(() => {
         applyResponseColor();
     });
@@ -94,6 +113,12 @@ RESPONSE_STYLE_SCRIPT = r"""
     });
 
     window.__guardResponseObserver = observer;
+
+    // Reapply styles if the website resets them.
+    window.__guardStyleTimer = setInterval(
+        applyResponseColor,
+        1500
+    );
 
     applyResponseColor();
 

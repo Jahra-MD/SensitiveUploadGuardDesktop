@@ -71,11 +71,35 @@ MONITOR_SCRIPT = """
         );
     }
 
+    
     function findPromptEditor() {
-        return document.querySelector(
-            '#prompt-textarea, textarea, [contenteditable="true"]'
-        );
+
+        const selectors = [
+            '#prompt-textarea',
+            '[contenteditable="true"][role="textbox"]',
+            '[contenteditable="true"].ProseMirror',
+            'div[contenteditable="true"]',
+            'textarea'
+        ];
+
+        for (const selector of selectors) {
+
+            const editors = document.querySelectorAll(selector);
+
+            for (const editor of editors) {
+
+                if (
+                    editor.getClientRects().length > 0 &&
+                    getText(editor).trim()
+                ) {
+                    return editor;
+                }
+            }
+        }
+
+        return null;
     }
+
 
     function getText(editor) {
         if (!editor) return "";
@@ -87,19 +111,25 @@ MONITOR_SCRIPT = """
         return editor.innerText || editor.textContent || "";
     }
 
+    
     function isSendButton(button) {
+
         const label = (
             (button.getAttribute("aria-label") || "") + " " +
             (button.getAttribute("data-testid") || "") + " " +
-            (button.getAttribute("title") || "")
+            (button.getAttribute("title") || "") + " " +
+            (button.getAttribute("id") || "") + " " +
+            (button.getAttribute("data-action") || "")
         ).toLowerCase();
 
         return (
             label.includes("send") ||
             label.includes("submit") ||
-            label.includes("ask")
+            label.includes("ask") ||
+            button.getAttribute("type") === "submit"
         );
     }
+
 
     function requestApproval(prompt, onApproved) {
         if (!window.guardBridge) {
@@ -422,15 +452,17 @@ class SensitiveUploadGuard(QMainWindow):
 
         browser.setUrl(QUrl(url))
         self.tabs.addTab(browser, name)
-
+  
     def inject_monitor(self, browser, success):
         if not success:
             print("[Guard] Page failed to load.")
             return
 
-        browser.page().runJavaScript(RESPONSE_STYLE_SCRIPT)
-        print("[Guard] Monitoring script injected.")
+        browser.page().runJavaScript(MONITOR_SCRIPT)
 
+        browser.page().runJavaScript(RESPONSE_STYLE_SCRIPT)
+
+        print("[Guard] Monitoring and styling scripts injected.")
 
 if __name__ == "__main__":
     app = UploadGuard(sys.argv)
