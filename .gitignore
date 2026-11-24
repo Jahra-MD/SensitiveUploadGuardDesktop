@@ -1,0 +1,40 @@
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Browser profiles and session data
+browser_profile/
+browser_data/
+storage/
+cookies/
+cache/
+*.log
+
+# Build artifacts
+build/
+dist/
+*.spec
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Test files and directories
+tests/
